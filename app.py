@@ -14,7 +14,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 # A função st.secrets carrega as chaves com segurança no Streamlit Cloud
 try:
     # Lendo as chaves do arquivo de segredos
-    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]  # Chave lida diretamente (SEM [supabase])
     SUPABASE_URL = st.secrets["supabase"]["URL"]
     SUPABASE_KEY = st.secrets["supabase"]["KEY"]
     SUPABASE_TABLE_NAME = st.secrets["supabase"]["TABLE_NAME"]
@@ -122,4 +122,5 @@ if st.button("Buscar Resposta"):
                         st.success(f"**[Fonte: {doc.metadata.get('file_name', SUPABASE_TABLE_NAME)}]**")
                         st.text(doc.page_content[:500] + "...") # Limita o preview do texto
                 else:
+
                     st.warning("Nenhum contexto relevante foi encontrado. Tente reformular a pergunta.")
