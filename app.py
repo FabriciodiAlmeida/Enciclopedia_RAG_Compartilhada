@@ -24,13 +24,6 @@ except (KeyError, FileNotFoundError):
     SUPABASE_URL = ""
     SUPABASE_KEY = ""
     SUPABASE_TABLE_NAME = "champlim"
-except (KeyError, FileNotFoundError):
-    st.error("As chaves de API e Supabase não foram encontradas. Verifique o arquivo .streamlit/secrets.toml")
-    # Define chaves vazias para evitar que o programa pare de rodar
-    GEMINI_API_KEY = ""
-    SUPABASE_URL = ""
-    SUPABASE_KEY = ""
-    SUPABASE_TABLE_NAME = "champlim"
 
 # Cliente Supabase e Modelo de Embeddings
 # O decorador @st.cache_resource garante que esta função seja rodada apenas uma vez.
@@ -130,4 +123,5 @@ if st.button("Buscar Resposta"):
                 else:
 
                     st.warning("Nenhum contexto relevante foi encontrado. Tente reformular a pergunta.")
+
 
