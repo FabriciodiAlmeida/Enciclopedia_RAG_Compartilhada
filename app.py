@@ -97,8 +97,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-st.title("📚 Enciclopédia Bíblica: Pergunte ao Gemini")
-st.markdown("Acesse todo o conteúdo da enciclopédia para obter respostas detalhadas e verificadas.")
+st.title("📚 Café com Bíblia")
+st.markdown("Faça pesquisas enquanto toma seu café")
 
 # Campo de entrada para a pergunta do usuário
 pergunta = st.text_input("Digite sua pergunta aqui:", placeholder="Ex: Qual a importância da Arca da Aliança e onde ela é mencionada pela última vez?")
@@ -119,6 +119,7 @@ if st.button("Buscar Resposta"):
                 st.error(f"Erro ao gerar a resposta. Por favor, tente novamente. Detalhe do erro: {e}")
     else:
         st.warning("Por favor, digite uma pergunta.")
+
 
 
 
