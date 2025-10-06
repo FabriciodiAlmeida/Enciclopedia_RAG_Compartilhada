@@ -35,7 +35,7 @@ except Exception as e:
 # Inicializa o Vector Store com o nome do argumento que a versão 0.1.15 aceita
 # O erro indica que a tabela foi indexada com o modelo de 384 dimensões (antigo).
 # Usamos 'text-embedding-001' como fallback para compatibilidade.
-embeddings = GoogleGenerativeAIEmbeddings(model="text-embedding-001", google_api_key=GEMINI_API_KEY)
+embeddings = GoogleGenerativeAIEmbeddings(model="text-embedding-004", google_api_key=GEMINI_API_KEY)
 vectorstore = SupabaseVectorStore(
     embedding=embeddings,
     client=supabase,
@@ -96,5 +96,6 @@ if st.button("Buscar Resposta"):
                 st.error(f"Erro ao gerar a resposta. Por favor, tente novamente ou verifique as chaves de API e Supabase. Detalhe do erro: {e}")
     else:
         st.warning("Por favor, digite uma pergunta.")
+
 
 
