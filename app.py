@@ -38,8 +38,7 @@ vectorstore = SupabaseVectorStore(
     embedding=embeddings,
     client=supabase,
     table_name=SUPABASE_TABLE_NAME,
-    query_content_column="content", # Argumento CORRETO para a versão LangChain
-)
+    )
 retriever = vectorstore.as_retriever()
 
 # Configura o modelo Gemini para a resposta
@@ -95,3 +94,4 @@ if st.button("Buscar Resposta"):
                 st.error(f"Erro ao gerar a resposta. Por favor, tente novamente ou verifique as chaves de API e Supabase. Detalhe do erro: {e}")
     else:
         st.warning("Por favor, digite uma pergunta.")
+
