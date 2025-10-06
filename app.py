@@ -10,14 +10,20 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 
-# --- 1. CONFIGURAÇÃO DE CHAVES E CONEXÃO (LENDO DE secrets.toml) ---
-# A função st.secrets carrega as chaves com segurança no Streamlit Cloud
+    # --- 1. CONFIGURAÇÃO DE CHAVES E CONEXÃO (LENDO DE secrets do Streamlit) ---
 try:
-    # Lendo as chaves do arquivo de segredos
-    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]  # Chave lida diretamente (SEM [supabase])
-    SUPABASE_URL = st.secrets["supabase"]["URL"]
-    SUPABASE_KEY = st.secrets["supabase"]["KEY"]
-    SUPABASE_TABLE_NAME = st.secrets["supabase"]["TABLE_NAME"]
+    # Lendo as chaves diretamente do painel de segredos
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+    SUPABASE_URL = st.secrets["SUPABASE_URL"]
+    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+    SUPABASE_TABLE_NAME = st.secrets["SUPABASE_TABLE_NAME"]
+except (KeyError, FileNotFoundError):
+    st.error("As chaves de API e Supabase não foram encontradas. Verifique o painel de Secrets no Streamlit Cloud.")
+    # Defina chaves vazias para evitar que o programa pare de rodar
+    GEMINI_API_KEY = ""
+    SUPABASE_URL = ""
+    SUPABASE_KEY = ""
+    SUPABASE_TABLE_NAME = "champlim"
 except (KeyError, FileNotFoundError):
     st.error("As chaves de API e Supabase não foram encontradas. Verifique o arquivo .streamlit/secrets.toml")
     # Define chaves vazias para evitar que o programa pare de rodar
@@ -124,3 +130,4 @@ if st.button("Buscar Resposta"):
                 else:
 
                     st.warning("Nenhum contexto relevante foi encontrado. Tente reformular a pergunta.")
+
