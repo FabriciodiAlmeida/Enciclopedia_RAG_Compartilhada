@@ -10,28 +10,16 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 
-# --- 1. CONFIGURAÇÃO DE CHAVES E CONEXÃO (LENDO DE secrets do Streamlit de forma tolerante) ---
+# --- 1. CONFIGURAÇÃO DE CHAVES E CONEXÃO (LENDO DE secrets do Streamlit de forma simples) ---
 try:
-    # 1. Tenta ler as chaves de forma aninhada (com a seção [supabase])
-    # Se a seção [supabase] não existir, 'st.secrets.get("supabase")' retorna None.
-    supabase_config = st.secrets.get("supabase")
-    if supabase_config:
-        SUPABASE_URL = supabase_config.get("URL")
-        SUPABASE_KEY = supabase_config.get("KEY")
-        SUPABASE_TABLE_NAME = supabase_config.get("TABLE_NAME", "champlim") # Default table name
-
-    # 2. Se a leitura aninhada falhar (supabase_config é None), tenta ler de forma PLANA
-    if not SUPABASE_URL:
-        SUPABASE_URL = st.secrets.get("SUPABASE_URL")
-        SUPABASE_KEY = st.secrets.get("SUPABASE_KEY")
-        SUPABASE_TABLE_NAME = st.secrets.get("SUPABASE_TABLE_NAME", "champlim")
-        
-    # 3. Sempre lê a chave do Gemini, que é a que causa menos problemas
+    # Lendo as chaves como variáveis de ambiente planas
     GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY")
-
+    SUPABASE_URL = st.secrets.get("SUPABASE_URL")
+    SUPABASE_KEY = st.secrets.get("SUPABASE_KEY")
+    SUPABASE_TABLE_NAME = st.secrets.get("SUPABASE_TABLE_NAME", "champlim")
+    
 except Exception as e:
-    st.error(f"Erro ao ler segredos (Erro: {e}). Verifique o formato no painel de Secrets (deve usar aspas e a seção [supabase]).")
-    # Defina chaves vazias para evitar que o programa pare de rodar
+    st.error(f"As chaves não foram lidas. Verifique o painel de Secrets no Streamlit Cloud.")
     GEMINI_API_KEY = ""
     SUPABASE_URL = ""
     SUPABASE_KEY = ""
@@ -135,6 +123,7 @@ if st.button("Buscar Resposta"):
                 else:
 
                     st.warning("Nenhum contexto relevante foi encontrado. Tente reformular a pergunta.")
+
 
 
 
