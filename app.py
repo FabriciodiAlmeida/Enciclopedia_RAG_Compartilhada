@@ -12,12 +12,12 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 
 # --- 1. CONFIGURAÇÃO DE CHAVES E CONEXÃO (LENDO DE secrets do Streamlit) ---
 try:
-    # Lendo as chaves: Chave Gemini solta, chaves Supabase dentro da seção [supabase]
-    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
-    SUPABASE_URL = st.secrets["supabase"]["URL"] # Busca a URL dentro da seção [supabase]
-    SUPABASE_KEY = st.secrets["supabase"]["KEY"] # Busca a KEY dentro da seção [supabase]
-    SUPABASE_TABLE_NAME = st.secrets["supabase"]["TABLE_NAME"]
-except (KeyError, FileNotFoundError):
+    # Lendo as chaves: A chave Gemini está solta. As chaves Supabase estão na seção [supabase]
+    GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY")
+    SUPABASE_URL = st.secrets.get("supabase").get("URL")
+    SUPABASE_KEY = st.secrets.get("supabase").get("KEY")
+    SUPABASE_TABLE_NAME = st.secrets.get("supabase").get("TABLE_NAME")
+except (KeyError, FileNotFoundError, AttributeError): # Adicionando AttributeError para erro de aninhamento
     st.error("As chaves de API e Supabase não foram encontradas. Verifique o painel de Secrets no Streamlit Cloud.")
     # Defina chaves vazias para evitar que o programa pare de rodar
     GEMINI_API_KEY = ""
@@ -123,6 +123,7 @@ if st.button("Buscar Resposta"):
                 else:
 
                     st.warning("Nenhum contexto relevante foi encontrado. Tente reformular a pergunta.")
+
 
 
 
