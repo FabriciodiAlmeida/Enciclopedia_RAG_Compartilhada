@@ -12,14 +12,14 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 
 # --- 1. CONFIGURAÇÃO DE CHAVES E CONEXÃO (LENDO DE secrets do Streamlit de forma simples) ---
 try:
-    # Lendo as chaves como variáveis de ambiente planas
-    GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY")
-    SUPABASE_URL = st.secrets.get("SUPABASE_URL")
-    SUPABASE_KEY = st.secrets.get("SUPABASE_KEY")
-    SUPABASE_TABLE_NAME = st.secrets.get("SUPABASE_TABLE_NAME", "champlim")
+    # Lendo as chaves como variáveis de ambiente PLANA
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+    SUPABASE_URL = st.secrets["SUPABASE_URL"]
+    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+    SUPABASE_TABLE_NAME = st.secrets["SUPABASE_TABLE_NAME"]
     
-except Exception as e:
-    st.error(f"As chaves não foram lidas. Verifique o painel de Secrets no Streamlit Cloud.")
+except KeyError:
+    st.error("As chaves não foram lidas. Verifique o painel de Secrets no Streamlit Cloud e use APENAS o formato plano (chave=valor, SEM [supabase]).")
     GEMINI_API_KEY = ""
     SUPABASE_URL = ""
     SUPABASE_KEY = ""
@@ -123,6 +123,7 @@ if st.button("Buscar Resposta"):
                 else:
 
                     st.warning("Nenhum contexto relevante foi encontrado. Tente reformular a pergunta.")
+
 
 
 
