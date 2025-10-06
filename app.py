@@ -10,16 +10,19 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 
-# --- 1. CONFIGURAÇÃO DE CHAVES E CONEXÃO (LENDO DE secrets do Streamlit de forma simples) ---
+# --- 1. CONFIGURAÇÃO DE CHAVES E CONEXÃO (LENDO DE secrets do Streamlit de forma SIMPLES) ---
 try:
-    # Lendo as chaves como variáveis de ambiente PLANA
+    # Lendo as chaves como variáveis de ambiente planas e EXIGINDO a leitura aninhada
     GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
-    SUPABASE_URL = st.secrets["SUPABASE_URL"]
-    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-    SUPABASE_TABLE_NAME = st.secrets["SUPABASE_TABLE_NAME"]
     
-except KeyError:
-    st.error("As chaves não foram lidas. Verifique o painel de Secrets no Streamlit Cloud e use APENAS o formato plano (chave=valor, SEM [supabase]).")
+    # A leitura ABAIXO só funciona se o painel tiver a seção [supabase]
+    SUPABASE_URL = st.secrets["supabase"]["URL"]
+    SUPABASE_KEY = st.secrets["supabase"]["KEY"]
+    SUPABASE_TABLE_NAME = st.secrets["supabase"]["TABLE_NAME"]
+    
+except KeyError as e:
+    st.error(f"Erro ao ler chave essencial: {e}. Verifique se o painel de Secrets (Settings -> Secrets) contém a chave exata e se o formato TOML é estrito (sem espaços após o sinal de =).")
+    # Defina chaves vazias para evitar que o programa pare de rodar
     GEMINI_API_KEY = ""
     SUPABASE_URL = ""
     SUPABASE_KEY = ""
@@ -123,6 +126,7 @@ if st.button("Buscar Resposta"):
                 else:
 
                     st.warning("Nenhum contexto relevante foi encontrado. Tente reformular a pergunta.")
+
 
 
 
