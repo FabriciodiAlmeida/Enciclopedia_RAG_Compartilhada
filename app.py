@@ -1,10 +1,11 @@
 # app.py (Código RAG Estável Final)
 
 # 1. INSTALAÇÕES E CONFIGURAÇÕES
+
 import os
 import streamlit as st
 from supabase.client import Client, create_client
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
@@ -51,8 +52,10 @@ TABLE_NAME = "champlim"
 @st.cache_resource
 def initialize_clients():
     supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    # Reutilize o embedder all-MiniLM-l6-v2
-    embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-l6-v2")
+    
+    # NOVO EMBEDDER: Usa a API do Google (muito mais estável no Streamlit)
+    embedder = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+    
     model = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
     return supabase_client, embedder, model
 
@@ -124,6 +127,7 @@ if st.button("Buscar Resposta"):
         st.markdown(answer)
     else:
         st.warning("Por favor, digite uma pergunta.")
+
 
 
 
