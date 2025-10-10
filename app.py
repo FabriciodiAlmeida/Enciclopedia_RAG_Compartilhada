@@ -57,7 +57,7 @@ st.caption("Sua Pergunta de Estudo Bíblico:")
 user_query = st.text_input(
     label="Sua Pergunta de Estudo Bíblico:",
     label_visibility="collapsed",
-    placeholder="Qual a explicação para o fratricídio de Caim contra Abel conforme a enciclopédia?",
+    placeholder="",
     key="user_query"
 )
 
@@ -78,3 +78,4 @@ if st.button("Buscar Resposta"):
         st.error("Por favor, digite uma pergunta.")
 
 # --- Fim do layout ---
+
