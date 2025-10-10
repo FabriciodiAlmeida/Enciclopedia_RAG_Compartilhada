@@ -1,127 +1,101 @@
+# app.py (Código RAG Estável Final)
+
+# 1. INSTALAÇÕES E CONFIGURAÇÕES
+import os
 import streamlit as st
-from langchain_community.vectorstores import SupabaseVectorStore
-from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
-from langchain.chains import RetrievalQA
-from supabase import create_client, Client
+from supabase.client import Client, create_client
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.prompts import ChatPromptTemplate
+from dotenv import load_dotenv
 
-# --- 1. CONFIGURAÇÃO DE CHAVES E CONEXÃO (LENDO DE secrets do Streamlit de forma simples) ---
-try:
-    # Lendo as chaves como variáveis de ambiente planas
-    # Estas chaves devem estar no painel de Secrets do Streamlit Cloud no formato: CHAVE="VALOR"
-    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
-    SUPABASE_URL = st.secrets["SUPABASE_URL"]
-    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-    SUPABASE_TABLE_NAME = st.secrets["SUPABASE_TABLE_NAME"]
+# Carrega variáveis de ambiente (se estiver usando .env localmente)
+load_dotenv()
+
+# --- 2. VARIÁVEIS DE AMBIENTE E SECRETS ---
+# Use st.secrets para implantar no Streamlit Cloud ou os.environ para rodar localmente
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or st.secrets["SUPABASE_KEY"]
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY") or st.secrets["GOOGLE_API_KEY"] 
+
+os.environ['GOOGLE_API_KEY'] = GOOGLE_API_KEY
+TABLE_NAME = "champlim"
+
+# Inicializar clientes (usando st.cache_resource para não recriar a cada interação)
+# Isso é crucial para o desempenho do Streamlit
+@st.cache_resource
+def initialize_clients():
+    supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    # Reutilize o embedder all-MiniLM-l6-v2
+    embedder = HuggingFaceEmbeddings(model_name="all-MiniLM-l6-v2")
+    model = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+    return supabase_client, embedder, model
+
+supabase, embedder, model = initialize_clients()
+
+# -------------------------------------------------------------
+# 3. FUNÇÃO DE BUSCA RAG (k=40) - Lógica de Backend
+# -------------------------------------------------------------
+def ask_rag(query):
+    query_vector = embedder.embed_query(query)
+
+    rpc_params = {
+        'query_embedding': query_vector,
+        'match_count': 40  # K=40 para evitar timeout no free tier (problema resolvido)
+    }
+
+    # Chama RPC (função vector_search)
+    response = supabase.rpc('vector_search', rpc_params).execute()
+
+    context = ""
+    if response.data:
+        for item in response.data:
+            metadata = item.get('metadata', {})
+            page = metadata.get('page')
+            
+            # Fonte CORRIGIDA: Lendo a coluna 'file_name' (que corrigimos no SQL)
+            file_name_col = item.get('file_name', 'R. N. Champlin - Enciclopédia')
+            
+            # Formatação final da fonte
+            source = f" (Fonte: {file_name_col}, Página: {page})" if page is not None else f" (Fonte: {file_name_col})"
+            
+            context += item.get('content', '') + source + "\n\n---\n\n"
+    else:
+        # Retorna mensagem se a busca não encontrar nada
+        return "Desculpe, não encontrei informações relevantes em meus volumes indexados."
+
+
+    # Prompt e Chamada ao Gemini
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "Você é um assistente de estudo bíblico. Use o CONTEXTO fornecido para responder à PERGUNTA. Priorize a informação que corresponde a qualquer referência bíblica ou tema específico mencionado na PERGUNTA. Se a resposta não estiver no contexto, diga 'CONTEXTO NÃO ENCONTRADO'. Inclua as fontes (Página e Arquivo) no final de cada resposta."),
+        ("user", "CONTEXTO: {context}\n\nPERGUNTA: {question}")
+    ])
     
-except KeyError as e:
-    # Se a leitura falhar, exibe a mensagem de erro e evita que o programa continue.
-    st.error(f"Erro ao ler chave essencial: {e}. Verifique o painel de Secrets no Streamlit Cloud (Settings -> Secrets) e use APENAS o formato plano (chave=valor).")
-    st.stop()
-except Exception as e:
-    st.error(f"Ocorreu um erro inesperado na leitura das chaves: {e}")
-    st.stop()
+    chain = prompt | model
+    result = chain.invoke({"context": context, "question": query})
+
+    return result.content
 
 
-# --- 2. CONFIGURAÇÃO DO MODELO RAG ---
+# -------------------------------------------------------------
+# 4. INTERFACE STREAMLIT
+# -------------------------------------------------------------
+st.set_page_config(page_title="Enciclopédia Bíblica RAG", layout="wide")
+st.title("📚 Enciclopédia Bíblica R. N. Champlin")
+st.markdown("Faça uma pergunta profunda sobre qualquer um dos 13 volumes indexados.")
 
-import streamlit as st
-from langchain_community.vectorstores import SupabaseVectorStore
-# Importamos a biblioteca do modelo antigo que seu Colab usou (384 dimensões)
-from langchain.embeddings import SentenceTransformerEmbeddings 
-from langchain_google_genai import ChatGoogleGenerativeAI # Mantemos o Gemini para a resposta final
-from langchain.chains import RetrievalQA
-from supabase import create_client, Client
+# Coluna para a entrada do usuário
+user_query = st.text_input("Sua Pergunta de Estudo Bíblico:", key="query_input")
 
-# --- 1. CONFIGURAÇÃO DE CHAVES E CONEXÃO ---
-try:
-    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
-    SUPABASE_URL = st.secrets["SUPABASE_URL"]
-    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-    SUPABASE_TABLE_NAME = st.secrets["SUPABASE_TABLE_NAME"]
-    
-except KeyError as e:
-    st.error(f"Erro ao ler chave essencial: {e}. Verifique o painel de Secrets no Streamlit Cloud (Settings -> Secrets) e use APENAS o formato plano (chave=valor).")
-    st.stop()
-except Exception as e:
-    st.error(f"Ocorreu um erro inesperado na leitura das chaves: {e}")
-    st.stop()
-
-
-# --- 2. CONFIGURAÇÃO DO MODELO RAG ---
-
-# Inicializa o cliente Supabase para o Vector Store
-try:
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-except Exception as e:
-    st.error(f"O sistema não pode se conectar ao banco de dados. Verifique a URL e a KEY do Supabase no painel de Secrets. Erro: {e}")
-    st.stop()
-
-# Inicializa o Vector Store com o modelo que foi usado na indexação (384 dimensões).
-# Isso força o alinhamento com a sua base de dados atual.
-embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-
-vectorstore = SupabaseVectorStore(
-    embedding=embeddings,
-    client=supabase,
-    table_name=SUPABASE_TABLE_NAME,
-)
-retriever = vectorstore.as_retriever()
-
-# Configura o modelo Gemini para a resposta
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=GEMINI_API_KEY, temperature=0.0)
-
-# Cria a cadeia de Recuperação e Geração (RAG)
-qa = RetrievalQA.from_chain_type(
-    llm=llm,
-    chain_type="stuff",
-    retriever=retriever,
-    return_source_documents=False
-)
-
-# --- 3. INTERFACE STREAMLIT ---
-
-st.set_page_config(page_title="Enciclopédia Bíblica: Pergunte ao Gemini", layout="wide")
-
-st.markdown("""
-    <style>
-        .stButton>button {
-            width: 100%;
-            height: 3em;
-            background-color: #6495ED; 
-            color: white;
-            font-size: 1.1em;
-            border-radius: 8px;
-            border: none;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-
-st.title("📚 Café com Bíblia")
-st.markdown("Faça pesquisas enquanto toma seu café")
-
-# Campo de entrada para a pergunta do usuário
-pergunta = st.text_input("Digite sua pergunta aqui:", placeholder="Ex: Qual a importância da Arca da Aliança e onde ela é mencionada pela última vez?")
-
-# Botão de busca
 if st.button("Buscar Resposta"):
-    if pergunta:
-        with st.spinner("Buscando e gerando resposta..."):
-            try:
-                # Executa a cadeia RAG
-                resposta = qa.invoke(pergunta)
-                
-                # Exibe a resposta formatada
-                st.subheader("Resposta do Gemini")
-                st.markdown(resposta["result"])
-
-            except Exception as e:
-                st.error(f"Erro ao gerar a resposta. Por favor, tente novamente. Detalhe do erro: {e}")
+    if user_query:
+        # Use um container para o spinner e para a resposta
+        with st.spinner("Buscando e analisando o contexto nos 13 volumes..."):
+            # Chama a função principal de RAG
+            answer = ask_rag(user_query)
+        
+        # Exibe a resposta formatada
+        st.subheader("Resposta da Enciclopédia:")
+        st.markdown(answer)
     else:
         st.warning("Por favor, digite uma pergunta.")
-
-
-
-
-
-
