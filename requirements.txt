@@ -1,8 +1,8 @@
 streamlit
-# Troca para o pacote oficial (pode ser mais compatível)
+# SUBSTITUIR 'supabase-py' por 'supabase' (pacote oficial)
 supabase
-# As libs do Google para o RAG que funcionam
 google-genai
 langchain-core
 python-dotenv
+
 
