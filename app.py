@@ -12,14 +12,20 @@ from dotenv import load_dotenv
 # Carrega variáveis de ambiente (se estiver usando .env localmente)
 load_dotenv()
 
-# --- 2. VARIÁVEIS DE AMBIENTE E SECRETS ---
-# Use st.secrets para implantar no Streamlit Cloud ou os.environ para rodar localmente
+# --- 2. VARIÁVEIS DE AMBIENTE E SECRETS (versão final) ---
+
+# Carregar a chave do Gemini com o nome que está no Secrets
+# Se a chave GEMINI_API_KEY existir no Streamlit Secrets, ela será usada.
+GEMINI_API_KEY_SECRET = os.environ.get("GEMINI_API_KEY") or st.secrets["GEMINI_API_KEY"]
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or st.secrets["SUPABASE_KEY"]
-GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY") or st.secrets["GOOGLE_API_KEY"] 
 
-os.environ['GOOGLE_API_KEY'] = GOOGLE_API_KEY
+# Agora, definimos a variável de ambiente necessária para a LangChain
+# Usando a chave que foi lida
+os.environ['GOOGLE_API_KEY'] = GEMINI_API_KEY_SECRET 
 TABLE_NAME = "champlim"
+
+# ... o restante do código da função initialize_clients() permanece o mesmo.
 
 # Inicializar clientes (usando st.cache_resource para não recriar a cada interação)
 # Isso é crucial para o desempenho do Streamlit
@@ -99,4 +105,5 @@ if st.button("Buscar Resposta"):
         st.markdown(answer)
     else:
         st.warning("Por favor, digite uma pergunta.")
+
 
