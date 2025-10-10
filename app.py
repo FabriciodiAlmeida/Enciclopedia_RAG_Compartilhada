@@ -3,7 +3,7 @@
 
 import os
 import streamlit as st
-from supabase.client import Client, create_client
+from supabase import create_client, Client
 from google import genai
 from google.genai.errors import APIError
 from langchain_core.prompts import ChatPromptTemplate
@@ -131,3 +131,4 @@ if st.button("Buscar Resposta", use_container_width=True):
         st.markdown(answer)
     else:
         st.warning("Por favor, digite uma pergunta.")
+
