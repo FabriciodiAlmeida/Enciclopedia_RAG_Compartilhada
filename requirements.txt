@@ -1,7 +1,8 @@
 streamlit
 supabase-py
-langchain-core
-# Tenta usar a versão mais nova e menos conflituosa:
+# Usaremos o cliente puro do Google para evitar erros de instalação de terceiros
 google-genai
+# O LangChain Core é leve e necessário apenas para o prompt
+langchain-core
 python-dotenv
 
