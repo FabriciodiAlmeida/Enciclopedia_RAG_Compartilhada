@@ -49,7 +49,7 @@ def ask_rag(query):
 st.set_page_config(page_title="Enciclopédia RAG Champlin", layout="centered")
 
 # --- Cabeçalho ---
-st.title("📖 Café com Bíblia")
+st.title("📚Café com Bíblia📚")
 st.write("Faça uma pergunta ou deixe uma referência bíblica.")
 st.caption("Sua Pergunta de Estudo Bíblico:")
 
@@ -78,4 +78,5 @@ if st.button("Buscar Resposta"):
         st.error("Por favor, digite uma pergunta.")
 
 # --- Fim do layout ---
+
 
