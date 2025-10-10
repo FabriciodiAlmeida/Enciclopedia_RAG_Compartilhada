@@ -4,9 +4,15 @@ import requests
 import json
 import os
 
+# app.py (Seu Frontend Streamlit)
+
 # --- CONFIGURAÇÃO DA API ---
-# COLOQUE SUA URL REAL DO VERCEL AQUI, ADICIONANDO /rag_endpoint NO FINAL
+# COLOQUE SUA URL REAL DO VERCEL AQUI, SUBSTITUINDO O TEXTO DO PLACEHOLDER
+# Exemplo: VERCEL_API_URL = "https://enciclopedia-rag-compartilhada.vercel.app/rag_endpoint"
 VERCEL_API_URL = "https://enciclopedia-rag-compartilhada.vercel.app/rag_endpoint" 
+
+
+# ... O restante do código Streamlit que você copiou (não mude mais nada)
 
 
 # --- FUNÇÃO DE CHAMADA ---
