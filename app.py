@@ -12,23 +12,34 @@ from dotenv import load_dotenv
 # Carrega variáveis de ambiente (se estiver usando .env localmente)
 load_dotenv()
 
-# --- 2. VARIÁVEIS DE AMBIENTE E SECRETS (Última Versão Segura) ---
-# Usamos try/except para capturar o erro Key Error (se ele ainda acontecer)
+# --- 2. VARIÁVEIS DE AMBIENTE E SECRETS (Última Versão Robusta com Colchetes) ---
+import os
+import streamlit as st
+# ... (outras importações)
 
-try:
-    # Lendo diretamente do st.secrets (que é mais confiável no Cloud)
-    GEMINI_API_KEY_SECRET = st.secrets.GEMINI_API_KEY
-    SUPABASE_URL = st.secrets.SUPABASE_URL
-    SUPABASE_KEY = st.secrets.SUPABASE_KEY
-except KeyError:
-    # Se der erro, tentamos as variáveis de ambiente (para teste local)
-    GEMINI_API_KEY_SECRET = os.environ.get("GEMINI_API_KEY")
-    SUPABASE_URL = os.environ.get("SUPABASE_URL")
-    SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+# ATENÇÃO: Os nomes das chaves NO CÓDIGO devem ser MINÚSCULOS para evitar conflitos de case.
 
-# Definindo a variável de ambiente necessária para a LangChain
+# Lendo as chaves com a notação de colchetes
+GEMINI_API_KEY_SECRET = st.secrets.get("gemini_api_key") 
+SUPABASE_URL = st.secrets.get("supabase_url") 
+SUPABASE_KEY = st.secrets.get("supabase_key") 
+
+# Se estiver rodando localmente, o valor pode vir de os.environ
+if not GEMINI_API_KEY_SECRET:
+    GEMINI_API_KEY_SECRET = os.environ.get("GEMINI_API_KEY") 
+
+if not SUPABASE_URL:
+    SUPABASE_URL = os.environ.get("SUPABASE_URL") 
+    
+if not SUPABASE_KEY:
+    SUPABASE_KEY = os.environ.get("SUPABASE_KEY") 
+
+
+# Definindo a variável de ambiente (necessária para a LangChain)
 os.environ['GOOGLE_API_KEY'] = GEMINI_API_KEY_SECRET 
 TABLE_NAME = "champlim"
+
+# Remova completamente o bloco 'try/except' anterior!
 
 # Remova os argumentos 'os.environ.get(...)' em todas as linhas, 
 # se elas estavam duplicando a tentativa de leitura.
@@ -113,6 +124,7 @@ if st.button("Buscar Resposta"):
         st.markdown(answer)
     else:
         st.warning("Por favor, digite uma pergunta.")
+
 
 
 
