@@ -1,8 +1,8 @@
 streamlit
 supabase-py
-langchain
-langchain-community
+# O langchain-google-genai já traz o langchain e langchain-core
 langchain-google-genai
+langchain-community
+# Necessário para os embeddings
 sentence-transformers
-protobuf
 python-dotenv
