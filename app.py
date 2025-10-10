@@ -81,8 +81,8 @@ def ask_rag(query):
 # 4. INTERFACE STREAMLIT
 # -------------------------------------------------------------
 st.set_page_config(page_title="Enciclopédia Bíblica RAG", layout="wide")
-st.title("📚 Enciclopédia Bíblica R. N. Champlin")
-st.markdown("Faça uma pergunta profunda sobre qualquer um dos 13 volumes indexados.")
+st.title("📚 Café com Biblia")
+st.markdown("Faça uma pergunta ou deixe um refer~encia biblica.")
 
 # Coluna para a entrada do usuário
 user_query = st.text_input("Sua Pergunta de Estudo Bíblico:", key="query_input")
@@ -99,3 +99,4 @@ if st.button("Buscar Resposta"):
         st.markdown(answer)
     else:
         st.warning("Por favor, digite uma pergunta.")
+
