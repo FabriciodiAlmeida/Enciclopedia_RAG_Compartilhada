@@ -57,24 +57,28 @@ supabase, gemini_client = initialize_clients()
 # --------------------------------------------------------------------------
 def ask_rag(query):
     
-    # 1. CRIAÇÃO DO EMBEDDING (Substitui o HuggingFace)
+    # 1. CRIAÇÃO DO EMBEDDING (CORREÇÃO DE PARÂMETRO 'content')
     try:
         embedding_response = gemini_client.models.embed_content(
             model='models/embedding-001', 
-            content=query
+            # A CORREÇÃO É USAR 'contents' EM VEZ DE 'content' (no plural)
+            contents=[query] 
         )
-        # O formato da resposta é ligeiramente diferente do HuggingFace
+        # O resultado é um dictionary, acessamos o valor 'embedding'
         query_vector = embedding_response['embedding']
     except APIError as e:
         return f"Erro na API do Google ao criar o vetor de busca: {e}"
 
-
     # 2. CHAMADA RPC AO SUPABASE (Busca Vetorial k=40)
+    # ... (ESTE BLOCO PERMANECE EXATAMENTE COMO VOCÊ O TEM)
     rpc_params = {
         'query_embedding': query_vector,
-        'match_count': 40  # K=40, o valor estável para o free tier
+        'match_count': 40
     }
     response = supabase.rpc('vector_search', rpc_params).execute()
+
+    # ... (O restante da formatação do contexto e a chamada ao generate_content)
+    # ... (MANTENHA O RESTO DO CÓDIGO INTACTO)
 
     context = ""
     if response.data:
@@ -131,4 +135,5 @@ if st.button("Buscar Resposta", use_container_width=True):
         st.markdown(answer)
     else:
         st.warning("Por favor, digite uma pergunta.")
+
 
