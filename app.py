@@ -28,6 +28,42 @@ def ask_rag(query):
         )
         response.raise_for_status() # Lança exceção para erros 4xx/5xx
 
+        # Seu código app.py deve ter a função ask_rag de cliente HTTP que te passei ANTES desta seção.
+
+# -------------------------------------------------------------
+# ESTRUTURA E LAYOUT DO STREAMLIT (Adicione isso se não existir)
+# -------------------------------------------------------------
+
+st.set_page_config(page_title="Enciclopédia RAG Champlin", layout="centered")
+
+# --- Cabeçalho ---
+st.title("📖 Café com Bíblia")
+st.write("Faça uma pergunta ou deixe uma referência bíblica.")
+st.caption("Sua Pergunta de Estudo Bíblico:")
+
+# --- Caixa de Chat e Lógica de Entrada ---
+user_query = st.text_input(
+    label="Sua Pergunta de Estudo Bíblico:",
+    label_visibility="collapsed",
+    placeholder="Qual a explicação para o fratricídio de Caim contra Abel conforme a enciclopédia?",
+    key="user_query"
+)
+
+# --- Botão e Chamada RAG ---
+if st.button("Buscar Resposta"):
+    if user_query:
+        with st.spinner("Buscando e processando a resposta do Cloud Run..."):
+            # A chamada agora usa a função que envia a requisição HTTP
+            answer = ask_rag(user_query)
+        
+        # Exibe a resposta formatada
+        st.subheader("Resposta da Enciclopédia:")
+        st.write(answer)
+    else:
+        st.error("Por favor, digite uma pergunta.")
+
+# --- Fim do layout ---
+
         # Retorna a resposta JSON (que contém a chave 'answer' enviada pelo Cloud Run)
         return response.json().get('answer', "Resposta inválida do servidor.")
 
@@ -40,3 +76,4 @@ def ask_rag(query):
         return f"Erro inesperado ao conectar ao Servidor RAG: {e}"
 
 # O restante do seu Streamlit app.py (layout, st.chat_input, etc.) continua o mesmo!
+
