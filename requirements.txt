@@ -2,5 +2,6 @@ flask
 supabase
 langchain-core
 google-genai
+ 
 
 
