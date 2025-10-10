@@ -1,139 +1,41 @@
-# app.py: CÓDIGO FINAL E ESTÁVEL PARA STREAMLIT
-# Substitua TODO o seu arquivo app.py por este código.
-
-import os
 import streamlit as st
-from supabase import create_client, Client
-from google import genai
-from google.genai.errors import APIError
-from langchain_core.prompts import ChatPromptTemplate
-from dotenv import load_dotenv
+import requests  # Certifique-se de ter 'requests' no seu requirements.txt do Streamlit
 
-# Carrega variáveis de ambiente (para teste local)
-load_dotenv()
+# --- CONFIGURAÇÃO DA CHAVE SECRETA (AGORA É SOMENTE A URL DO ENDPOINT) ---
+# Você deve criar uma nova linha no seu secrets.toml para esta URL.
+# O Streamlit já tem 'requests' e o novo código abaixo o usa.
 
-# --------------------------------------------------------------------------
-# 1. CONFIGURAÇÕES E CHAVES (Leitura do Streamlit Secrets)
-# Usamos try/except para tentar ler as chaves que você configurou
-# --------------------------------------------------------------------------
+# 1. PEGAR A URL DO SERVIDOR RAG NO GOOGLE CLOUD
+RAG_ENDPOINT_URL = st.secrets.get("RAG_ENDPOINT_URL")
 
-# Tenta ler as chaves em MAIÚSCULAS e MINÚSCULAS
-try:
-    GEMINI_API_KEY_SECRET = st.secrets.get("gemini_api_key") or st.secrets["GEMINI_API_KEY"]
-    SUPABASE_URL = st.secrets.get("supabase_url") or st.secrets["SUPABASE_URL"]
-    SUPABASE_KEY = st.secrets.get("supabase_key") or st.secrets["SUPABASE_KEY"]
-except KeyError:
-    # Se der erro no secrets, tenta ler as variáveis de ambiente (para teste local)
-    GEMINI_API_KEY_SECRET = os.environ.get("GEMINI_API_KEY") 
-    SUPABASE_URL = os.environ.get("SUPABASE_URL") 
-    SUPABASE_KEY = os.environ.get("SUPABASE_KEY") 
-    
-if not GEMINI_API_KEY_SECRET or not SUPABASE_URL:
-    st.error("Erro: As chaves de API (GEMINI/SUPABASE) não foram configuradas corretamente nos Streamlit Secrets.")
-    st.stop()
-
-# Define a variável de ambiente (necessária para o cliente Gemini)
-os.environ['GEMINI_API_KEY'] = GEMINI_API_KEY_SECRET
-TABLE_NAME = "champlim"
-
-
-# --------------------------------------------------------------------------
-# 2. CLIENTES E EMBEDDER (Usando o Cliente Puro do Google)
-# --------------------------------------------------------------------------
-@st.cache_resource
-def initialize_clients():
-    supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    
-    # Inicializa o cliente Google com a chave lida (muito mais estável)
-    gemini_client = genai.Client(api_key=GEMINI_API_KEY_SECRET)
-    
-    return supabase_client, gemini_client
-
-supabase, gemini_client = initialize_clients()
-
-
-# --------------------------------------------------------------------------
-# 3. FUNÇÃO DE BUSCA RAG (Lógica Final Estável)
-# --------------------------------------------------------------------------
+# --- FUNÇÃO PRINCIPAL (AGORA É APENAS UM CLIENTE HTTP) ---
 def ask_rag(query):
-    
-    # 1. CRIAÇÃO DO EMBEDDING (CORREÇÃO DE PARÂMETRO 'content')
-    try:
-        embedding_response = gemini_client.models.embed_content(
-            model='models/embedding-001', 
-            # A CORREÇÃO É USAR 'contents' EM VEZ DE 'content' (no plural)
-            contents=[query] 
-        )
-        # O resultado é um dictionary, acessamos o valor 'embedding'
-        query_vector = embedding_response['embedding']
-    except APIError as e:
-        return f"Erro na API do Google ao criar o vetor de busca: {e}"
-
-    # 2. CHAMADA RPC AO SUPABASE (Busca Vetorial k=40)
-    # ... (ESTE BLOCO PERMANECE EXATAMENTE COMO VOCÊ O TEM)
-    rpc_params = {
-        'query_embedding': query_vector,
-        'match_count': 40
-    }
-    response = supabase.rpc('vector_search', rpc_params).execute()
-
-    # ... (O restante da formatação do contexto e a chamada ao generate_content)
-    # ... (MANTENHA O RESTO DO CÓDIGO INTACTO)
-
-    context = ""
-    if response.data:
-        for item in response.data:
-            metadata = item.get('metadata', {})
-            page = metadata.get('page')
-            
-            # Fonte CORRIGIDA: Lendo a coluna 'file_name' (que corrigimos no SQL)
-            file_name_col = item.get('file_name', 'R. N. Champlin - Enciclopédia')
-            
-            source = f" (Fonte: {file_name_col}, Página: {page})" if page is not None else f" (Fonte: {file_name_col})"
-            
-            context += item.get('content', '') + source + "\n\n---\n\n"
-    else:
-        return "Desculpe, a busca vetorial não encontrou contexto relevante nos volumes indexados."
-
-
-    # 3. CHAMADA AO MODELO (Usando o cliente puro do Google)
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "Você é um assistente de estudo bíblico. Use o CONTEXTO fornecido para responder à PERGUNTA. Se a resposta não estiver no contexto, diga 'CONTEXTO NÃO ENCONTRADO'. Inclua as fontes (Página e Arquivo) no final de cada resposta."),
-        ("user", "CONTEXTO: {context}\n\nPERGUNTA: {question}")
-    ])
-    
-    prompt_formatted = prompt.format(context=context, question=query)
-    
-    try:
-        response = gemini_client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt_formatted
-        )
-        return response.text
-    except APIError as e:
-        return f"Erro na API do Google ao gerar a resposta: {e}"
-
-
-# --------------------------------------------------------------------------
-# 4. INTERFACE STREAMLIT
-# --------------------------------------------------------------------------
-st.set_page_config(page_title="Enciclopédia Bíblica RAG", layout="wide")
-st.title("📚 Café com Biblia")
-st.markdown("Faça uma pergunta ou deixe uma referência biblica.")
-
-# Coluna para a entrada do usuário
-user_query = st.text_area("Sua Pergunta de Estudo Bíblico:", key="query_input")
-
-if st.button("Buscar Resposta", use_container_width=True):
-    if user_query:
-        with st.spinner("Buscando e analisando o contexto nos 13 volumes..."):
-            # Chama a função principal
-            answer = ask_rag(user_query)
+    """
+    Faz uma chamada HTTP POST para o servidor Cloud Run/GCF para obter a resposta RAG.
+    """
+    if not RAG_ENDPOINT_URL:
+        return "Erro de Configuração: RAG_ENDPOINT_URL não encontrado nos segredos do Streamlit."
         
-        # Exibe a resposta formatada
-        st.subheader("Resposta da Enciclopédia:")
-        st.markdown(answer)
-    else:
-        st.warning("Por favor, digite uma pergunta.")
+    try:
+        # Adiciona o segmento de rota para o endpoint que configuramos
+        url_com_endpoint = RAG_ENDPOINT_URL + "/rag_endpoint"
+        
+        # Envia a pergunta do usuário como JSON para o servidor
+        response = requests.post(
+            url_com_endpoint, 
+            json={'query': query}
+        )
+        response.raise_for_status() # Lança exceção para erros 4xx/5xx
 
+        # Retorna a resposta JSON (que contém a chave 'answer')
+        return response.json().get('answer', "Resposta inválida do servidor.")
 
+    except requests.exceptions.HTTPError as e:
+        # Captura erros do servidor Cloud Run (ex: 500)
+        return f"Erro no Servidor RAG (HTTP): {e}. Tente novamente."
+    except requests.exceptions.ConnectionError:
+        return "Erro de Conexão: O servidor RAG não está acessível ou a URL está errada."
+    except Exception as e:
+        return f"Erro inesperado ao conectar ao Servidor RAG: {e}"
+
+# O restante do seu Streamlit app.py (layout, st.chat_input, etc.) continua o mesmo!
