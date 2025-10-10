@@ -48,12 +48,12 @@ def buscar_resposta(pergunta):
 
 # --- INTERFACE STREAMLIT ---
 st.set_page_config(page_title="Café com Bíblia", layout="centered")
-st.title("📚 Café com Bíblia ☕")
+st.title("📚 Café com Bíblia 📚")
 st.markdown("Faça uma pergunta ou deixe uma referência bíblica.")
 
 # Caixa de entrada do usuário
 pergunta_usuario = st.text_input("Sua Pergunta de Estudo Bíblico:", 
-                                 placeholder="Ex: Qual o nome do Filho do Sacerdote Zacarias?")
+                                 placeholder="")
 
 # Botão de busca
 if st.button("Buscar Resposta"):
