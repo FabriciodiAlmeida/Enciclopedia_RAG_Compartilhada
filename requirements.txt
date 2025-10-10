@@ -1,8 +1,8 @@
 streamlit
-supabase-py
-# Usaremos o cliente puro do Google para evitar erros de instalação de terceiros
+# Troca para o pacote oficial (pode ser mais compatível)
+supabase
+# As libs do Google para o RAG que funcionam
 google-genai
-# O LangChain Core é leve e necessário apenas para o prompt
 langchain-core
 python-dotenv
 
