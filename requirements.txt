@@ -1,3 +1,5 @@
-streamlit
-requests  # Necessário para fazer chamadas HTTP
+flask
+supabase
+langchain-core
+requests
 
