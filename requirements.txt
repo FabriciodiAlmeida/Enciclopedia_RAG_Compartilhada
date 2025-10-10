@@ -1,8 +1,7 @@
 streamlit
 supabase-py
-langchain
 langchain-core
-langchain-community
-langchain-google-genai
+# Tenta usar a versão mais nova e menos conflituosa:
+google-genai
 python-dotenv
 
