@@ -12,18 +12,26 @@ from dotenv import load_dotenv
 # Carrega variáveis de ambiente (se estiver usando .env localmente)
 load_dotenv()
 
-# --- 2. VARIÁVEIS DE AMBIENTE E SECRETS (versão final) ---
+# --- 2. VARIÁVEIS DE AMBIENTE E SECRETS (Última Versão Segura) ---
+# Usamos try/except para capturar o erro Key Error (se ele ainda acontecer)
 
-# Carregar a chave do Gemini com o nome que está no Secrets
-# Se a chave GEMINI_API_KEY existir no Streamlit Secrets, ela será usada.
-GEMINI_API_KEY_SECRET = os.environ.get("GEMINI_API_KEY") or st.secrets["GEMINI_API_KEY"]
-SUPABASE_URL = os.environ.get("SUPABASE_URL") or st.secrets["SUPABASE_URL"]
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or st.secrets["SUPABASE_KEY"]
+try:
+    # Lendo diretamente do st.secrets (que é mais confiável no Cloud)
+    GEMINI_API_KEY_SECRET = st.secrets.GEMINI_API_KEY
+    SUPABASE_URL = st.secrets.SUPABASE_URL
+    SUPABASE_KEY = st.secrets.SUPABASE_KEY
+except KeyError:
+    # Se der erro, tentamos as variáveis de ambiente (para teste local)
+    GEMINI_API_KEY_SECRET = os.environ.get("GEMINI_API_KEY")
+    SUPABASE_URL = os.environ.get("SUPABASE_URL")
+    SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
-# Agora, definimos a variável de ambiente necessária para a LangChain
-# Usando a chave que foi lida
+# Definindo a variável de ambiente necessária para a LangChain
 os.environ['GOOGLE_API_KEY'] = GEMINI_API_KEY_SECRET 
 TABLE_NAME = "champlim"
+
+# Remova os argumentos 'os.environ.get(...)' em todas as linhas, 
+# se elas estavam duplicando a tentativa de leitura.
 
 # ... o restante do código da função initialize_clients() permanece o mesmo.
 
@@ -105,5 +113,6 @@ if st.button("Buscar Resposta"):
         st.markdown(answer)
     else:
         st.warning("Por favor, digite uma pergunta.")
+
 
 
