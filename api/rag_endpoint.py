@@ -3,7 +3,7 @@ import os
 import json
 from flask import Flask, jsonify, request
 from supabase import create_client
-import requests # NOVO: Cliente HTTP leve
+import requests # Cliente HTTP leve
 from langchain_core.prompts import ChatPromptTemplate
 
 # Define o objeto Flask
@@ -39,28 +39,24 @@ def ask_rag(query):
         return f"FALHA CRÍTICA: Erro ao criar cliente Supabase: {e}"
 
 
-    # 2. CRIAÇÃO DO EMBEDDING (USANDO REQUESTS)
+    # 2. CRIAÇÃO DO EMBEDDING (USANDO REQUESTS - FORMATO CORRIGIDO)
     try:
         embedding_payload = {
-            "requests": [
-                {
-                    "model": "embedding-001",
-                    "content": {"parts": [{"text": query}]}
-                }
-            ]
+            "model": "embedding-001",
+            "content": {"parts": [{"text": query}]}
         }
         
         # Chamada HTTP para criar o vetor
         response = requests.post(
             f"{EMBEDDING_URL}?key={GEMINI_API_KEY}", 
             headers=HEADERS, 
-            json=embedding_payload
+            json={"content": embedding_payload["content"], "model": embedding_payload["model"]} # CORRIGIDO AQUI
         )
         response.raise_for_status()
         
         # Extrai o vetor
         response_json = response.json()
-        query_vector = response_json['embeddings'][0]['values']
+        query_vector = response_json['embedding']['values'] # O formato da resposta também mudou para ser compatível
         
     except requests.exceptions.HTTPError as e:
         return f"Erro HTTP no Embedding (código {response.status_code}): {response.text}"
@@ -90,7 +86,7 @@ def ask_rag(query):
         return f"Erro ao acessar o Supabase RPC: {e}"
 
 
-    # 4. CHAMADA AO MODELO (USANDO REQUESTS)
+    # 4. CHAMADA AO MODELO (USANDO REQUESTS - FORMATO CORRIGIDO)
     prompt = ChatPromptTemplate.from_messages([
         ("system", "Você é um assistente de estudo bíblico. Use o CONTEXTO fornecido para responder à PERGUNTA. Se a resposta não estiver no contexto, diga 'CONTEXTO NÃO ENCONTRADO'. Inclua as fontes (Página e Arquivo) no final de cada resposta."),
         ("user", "CONTEXTO: {context}\n\nPERGUNTA: {question}")
@@ -134,14 +130,11 @@ def rag_endpoint_route():
 
         request_data = request.json
         if request_data is None:
-            # Tenta decodificar o corpo da requisição bruta se request.json for None
             request_body_text = request.data.decode('utf-8')
             request_data = json.loads(request_body_text)
 
         if request_data is None or 'query' not in request_data or not request_data['query']:
-            # Seu frontend Streamlit está no Cloud, mas o backend (o Cloud Run, que agora é o Vercel)
-            # estava retornando erro, ou o frontend parou de enviar o JSON correto
-            return jsonify({'answer': 'Nenhuma pergunta válida fornecida. O Streamlit precisa enviar um JSON com {"query": "sua pergunta"}.'}), 400
+            return jsonify({'answer': 'Nenhuma pergunta válida fornecida.'}), 400
 
         user_query = request_data['query']
             
