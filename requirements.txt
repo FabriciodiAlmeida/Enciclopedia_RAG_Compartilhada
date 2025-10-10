@@ -1,5 +1,6 @@
 flask
 supabase
 langchain-core
-requests
+google-genai
+
 
